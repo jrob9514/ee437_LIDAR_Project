@@ -3,47 +3,72 @@
 from pyrplidar import PyRPlidar
 import time
 
+"""Global Variables"""
+# Boolean to control whether the program loop is running
+lidar_program_running = True
 
-def check_lidar_connection():
-    lidar = PyRPlidar()
-    lidar.connect(port="/dev/ttyUSB0", baudrate=115200, timeout=3)
+# Lidar sensor being controlled by the program
+lidar_sensor = PyRPlidar()
 
-    info = lidar.get_info()
-    print("info :", info)
-
-    health = lidar.get_health()
-    print("health: ", health)
-
-    samplerate = lidar.get_samplerate()
-    print("samplerate: ", samplerate)
-
-    scan_modes = lidar.get_scan_modes()
-    print("scan_modes: ")
-    for scan_mode in scan_modes:
-        print(scan_mode)
-
-    lidar.disconnect()
+# LIDAR motor speed
+lidar_motor_speed = 250
 
 
-def simple_scan():
-    lidar = PyRPlidar()
-    lidar.connect(port="/dev/ttyUSB0", baudrate=115200, timeout=3)
+def collect_scan_rotation(input_scan_generator):
+    # Collect the number of points that are found in one full rotation
 
-    lidar.set_motor_pwm(500)
-    time.sleep(2)
+    # Create an empty list of points
+    output_points = []
 
-    scan_generator = lidar.force_scan()
+    for count, scan in enumerate(input_scan_generator()):
+        output_points.append(scan)
 
-    for count, scan in enumerate(scan_generator()):
-        print(count, scan)
-        if count == 20: break
+        if scan.start_flag:
+            break
 
-    lidar.stop()
-    lidar.set_motor_pwm(0)
+    return output_points
 
-    lidar.disconnect()
+
+def stop_program():
+    global lidar_program_running
+
+    lidar_program_running = False
+
+
+def draw_points(input_points):
+    for point in input_points:
+        print(point)
 
 
 if __name__ == "__main__":
-    check_lidar_connection()
-    simple_scan()
+    global lidar_program_running
+    global lidar_sensor
+    global lidar_motor_speed
+
+    # Setup LIDAR
+    lidar_sensor.connect(port="/dev/ttyUSB0", baudrate=115200, timeout=3)
+
+    # Set LIDAR Motor
+    lidar_sensor.set_motor_pwm(250)
+    time.sleep(2)
+
+    # Create scan generator to grab LIDAR scan data
+    scan_generator = lidar_sensor.force_scan()
+
+    rotations = 0
+
+    while lidar_program_running:
+        # Create an empty list of points
+        lidar_points = collect_scan_rotation(scan_generator)
+
+        rotations += 1
+
+        draw_points(lidar_points)
+
+        if rotations >= 10:
+            lidar_program_running = False
+
+    lidar_sensor.stop()
+    lidar_sensor.set_motor_pwm(0)
+
+    lidar_sensor.disconnect()
