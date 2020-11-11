@@ -1,16 +1,49 @@
-# This is a sample Python script.
+# RPLIDAR Script
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name} nice to meet you!')  # Press Ctrl+F8 to toggle the breakpoint.
+from pyrplidar import PyRPlidar
+import time
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('Jacob and Praise')
+def check_lidar_connection():
+    lidar = PyRPlidar()
+    lidar.connect(port="/dev/ttyUSB0", baudrate=115200, timeout=3)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    info = lidar.get_info()
+    print("info :", info)
+
+    health = lidar.get_health()
+    print("health: ", health)
+
+    samplerate = lidar.get_samplerate()
+    print("samplerate: ", samplerate)
+
+    scan_modes = lidar.get_scan_modes()
+    print("scan_modes: ")
+    for scan_mode in scan_modes:
+        print(scan_mode)
+
+    lidar.disconnect()
+
+
+def simple_scan():
+    lidar = PyRPlidar()
+    lidar.connect(port="/dev/ttyUSB0", baudrate=115200, timeout=3)
+
+    lidar.set_motor_pwm(500)
+    time.sleep(2)
+
+    scan_generator = lidar.force_scan()
+
+    for count, scan in enumerate(scan_generator()):
+        print(count, scan)
+        if count == 20: break
+
+    lidar.stop()
+    lidar.set_motor_pwm(0)
+
+    lidar.disconnect()
+
+
+if __name__ == "__main__":
+    check_lidar_connection()
+    simple_scan()
