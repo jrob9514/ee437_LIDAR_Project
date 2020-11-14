@@ -2,6 +2,17 @@
 
 from pyrplidar import PyRPlidar
 import time
+from tkinter import *
+
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
+# Implement the default Matplotlib key bindings.
+from matplotlib.backend_bases import key_press_handler
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+import numpy as np
+import json
+
 
 """Global Variables"""
 # Boolean to control whether the program loop is running
@@ -12,6 +23,13 @@ lidar_sensor = PyRPlidar()
 
 # LIDAR motor speed
 lidar_motor_speed = 10
+
+window = Tk()
+
+def debug_data():
+    
+
+    return
 
 
 def setup_sensor():
@@ -27,7 +45,45 @@ def setup_sensor():
 
 def setup_gui():
     # INSERT Setup elements of GUI
+    window.title("Lidar Applicataion")
 
+    window.rowconfigure(0, minsize=100, weight=1)
+
+    window.columnconfigure(1, minsize=100, weight=1)
+    buttons = Frame(window)
+    buttons.grid(row=0, column=0)
+    start = Button(buttons, text="Start")
+    start.pack()
+    stop = Button(buttons, text="Stop")
+    stop.pack()
+    save = Button(buttons, text="Save")
+    save.pack()
+
+    plot = Frame(master=window)
+    plot.grid(row=0, column=1)
+
+
+
+    r = np.arange(0, 2, 0.01)
+    theta = 2 * np.pi * r
+    figure = plt.Figure(figsize=(5,4), dpi=100)
+    ax = figure.add_subplot(111, projection='polar')
+    ax.plot(theta, r)
+    ax.set_rmax(2)
+    ax.set_rticks([0.5, 1, 1.5, 2])  # Less radial ticks
+    ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+    ax.grid(True)
+
+    # ax.set_title("A line plot on a polar axis", va='bottom')
+    # plt.show()
+
+    canvas = FigureCanvasTkAgg(figure, plot)
+    canvas.get_tk_widget().pack()    
+
+    # lbl = Label(window, text="hello")
+    # lbl.pack()
+    # buttons.pack()
+    # window.geometry("300x200")
     return
 
 
@@ -43,7 +99,7 @@ def stop_sensor():
 
 def stop_gui():
     # INSERT code to stop the GUI gracefully
-
+    
     return
 
 
@@ -114,25 +170,27 @@ if __name__ == "__main__":
     # global lidar_motor_speed
 
     # Call setup code for sensor
-    setup_sensor()
+    # setup_sensor()
 
-    # Call setup code for GUI
+    # # Call setup code for GUI
     setup_gui()
 
-    # Create scan generator to grab LIDAR scan data
-    scan_generator = lidar_sensor.force_scan()
+    # # Create scan generator to grab LIDAR scan data
+    # scan_generator = lidar_sensor.force_scan()
 
-    rotations = 0
+    # rotations = 0
 
-    while lidar_program_running:
-        # Create an empty list of points
-        lidar_points = collect_scan_rotation(scan_generator)
+    # while lidar_program_running:
+    #     # Create an empty list of points
+    #     lidar_points = collect_scan_rotation(scan_generator)
 
-        rotations += 1
+    #     rotations += 1
 
-        draw_points(lidar_points)
+    #     draw_points(lidar_points)
 
-        if rotations >= 10:
-            stop_program()
+    #     if rotations >= 10:
+    #         stop_program()
 
-    stop_sensor()
+    # stop_sensor()
+
+    window.mainloop()
