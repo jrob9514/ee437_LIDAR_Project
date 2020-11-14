@@ -11,7 +11,7 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
-import json
+import json, math
 
 
 """Global Variables"""
@@ -26,9 +26,15 @@ lidar_motor_speed = 10
 
 window = Tk()
 
-def debug_data():
-    
+data = []
 
+def debug_data():
+    with open("message.txt", "r") as f:
+        for line in f:
+            pos = json.loads(line.split(" ", 1)[1].replace("'", '"').replace("False","false"))
+            print(f'{math.floor(pos["distance"])}, <{math.floor(pos["angle"])}>')
+            data.append(pos)
+            
     return
 
 
@@ -173,6 +179,7 @@ if __name__ == "__main__":
     # setup_sensor()
 
     # # Call setup code for GUI
+    debug_data()
     setup_gui()
 
     # # Create scan generator to grab LIDAR scan data
