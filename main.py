@@ -28,6 +28,10 @@ window = Tk()
 
 data = []
 
+
+def exit():
+    window.quit()
+
 def debug_data():
     with open("message.txt", "r") as f:
         for line in f:
@@ -52,31 +56,36 @@ def setup_sensor():
 def setup_gui():
     # INSERT Setup elements of GUI
     window.title("Lidar Applicataion")
+    window.attributes("-fullscreen", True)
 
     window.rowconfigure(0, minsize=100, weight=1)
 
     window.columnconfigure(1, minsize=100, weight=1)
     buttons = Frame(window)
     buttons.grid(row=0, column=0)
-    start = Button(buttons, text="Start")
+    start = Button(buttons, text="Start", bg="green")
     start.pack()
-    stop = Button(buttons, text="Stop")
+    stop = Button(buttons, text="Stop", bg="black")
     stop.pack()
-    save = Button(buttons, text="Save")
+    save = Button(buttons, text="Save", bg="blue")
     save.pack()
+    close = Button(buttons, text="Exit", command=exit, bg="red")
+    close.pack()
 
     plot = Frame(master=window)
     plot.grid(row=0, column=1)
 
 
 
-    r = np.arange(0, 2, 0.01)
-    theta = 2 * np.pi * r
-    figure = plt.Figure(figsize=(5,4), dpi=100)
+    # distances = [ for x in data]
+    # angles = [ for x in data]
+    figure = plt.Figure()
     ax = figure.add_subplot(111, projection='polar')
-    ax.plot(theta, r)
-    ax.set_rmax(2)
-    ax.set_rticks([0.5, 1, 1.5, 2])  # Less radial ticks
+    for elem in data:
+        ax.plot(elem["angle"], elem["distance"], "ro")
+    
+    # ax.set_rmax(2)
+    # ax.set_rticks([0.5, 1, 1.5, 2])  # Less radial ticks
     ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
     ax.grid(True)
 
@@ -91,6 +100,7 @@ def setup_gui():
     # buttons.pack()
     # window.geometry("300x200")
     return
+
 
 
 def stop_sensor():
