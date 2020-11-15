@@ -3,6 +3,7 @@
 from pyrplidar import PyRPlidar
 import time
 from tkinter import *
+from tkinter import font as tkFont
 
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -36,7 +37,7 @@ def debug_data():
     with open("message.txt", "r") as f:
         for line in f:
             pos = json.loads(line.split(" ", 1)[1].replace("'", '"').replace("False","false"))
-            print(f'{math.floor(pos["distance"])}, <{math.floor(pos["angle"])}>')
+            # print(f'{math.floor(pos["distance"])}, <{math.floor(pos["angle"])}>')
             data.append(pos)
             
     return
@@ -57,20 +58,24 @@ def setup_gui():
     # INSERT Setup elements of GUI
     window.title("Lidar Applicataion")
     window.attributes("-fullscreen", True)
-
+    helv36 = tkFont.Font(family='Helvetica', size=40, weight=tkFont.BOLD)
     window.rowconfigure(0, minsize=100, weight=1)
 
     window.columnconfigure(1, minsize=100, weight=1)
     buttons = Frame(window)
     buttons.grid(row=0, column=0)
-    start = Button(buttons, text="Start", bg="green")
-    start.pack()
-    stop = Button(buttons, text="Stop", bg="black")
-    stop.pack()
-    save = Button(buttons, text="Save", bg="blue")
-    save.pack()
-    close = Button(buttons, text="Exit", command=exit, bg="red")
-    close.pack()
+    start = Button(buttons, width=20, height=4, text="Start", bg="green", fg="white", font=helv36)
+    start.grid(row=0)
+    # start.pack()
+    stop = Button(buttons, width=20, height=4, text="Stop", fg="white", bg="black", font=helv36)
+    stop.grid(row=1)
+    # stop.pack()
+    save = Button(buttons, width=20, height=4, text="Save", bg="blue", fg="white", font=helv36)
+    save.grid(row=2)
+    # save.pack()
+    close = Button(buttons, width=20, height=4, text="Exit", command=exit, bg="red", fg="white", font=helv36)
+    close.grid(row=3)
+    # close.pack()
 
     plot = Frame(master=window)
     plot.grid(row=0, column=1)
@@ -79,7 +84,7 @@ def setup_gui():
 
     # distances = [ for x in data]
     # angles = [ for x in data]
-    figure = plt.Figure()
+    figure = plt.Figure(figsize=(30,30), dpi=100)
     ax = figure.add_subplot(111, projection='polar')
     for elem in data:
         ax.plot(elem["angle"], elem["distance"], "ro")
