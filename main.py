@@ -164,16 +164,24 @@ def draw_points():
     try:
         # code to draw points 
         # loop through the lidar values 360 at a time, set the value with a floored value of the angle as the index 
-        for i in range(0, len(data)):
-            data[i]["distance"] = data[i]["distance"] + 100 
-            plot_points[i].remove()
+        # OR
+        # store an array of one rotation to data and loop through it
+        """
+        UNCOMMENT THIS => 
+            for line in f: #sendput scanned values from array f and converts them to a json object
+                pos = json.loads(line.split(" ", 1)[1].replace("'", '"').replace("False","false"))
+                # print(f'{math.floor(pos["distance"])}, <{math.floor(pos["angle"])}>')
+                data.append(pos)
+        """
+        points = []
+
+        while len(plot_points) > 0:
+            plot_points.remove()
+
+        for point in points:
             
-            if data[i]["quality"] > 0:
-                print(data[i]["quality"])
-                plot_points[i], = ax.plot(data[i]["angle"], data[i]["distance"], "ro")
-            else:
-                print(data[i]["quality"])
-                plot_points[i], = ax.plot(data[i]["angle"], data[i]["distance"], "bo", alpha=0)
+            if point.quality > 0:
+                plot_points.append(ax.plot(point.angle, point.diatance, "ro", alpha=1))
    
         ax.figure.canvas.draw()
         ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
