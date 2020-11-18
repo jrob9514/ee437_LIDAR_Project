@@ -62,13 +62,31 @@ def setup_sensor():
     Stops the lidar sensor
 """
 def stop_sensor():
-    # Perform actions required to stop the LIDAR sensor
-    lidar_sensor.stop()
-    lidar_sensor.set_motor_pwm(0)
+    global lidar_program_running
+    try:
+        # Perform actions required to stop the LIDAR sensor
+        lidar_sensor.stop()
+        lidar_sensor.set_motor_pwm(0)
 
-    lidar_sensor.disconnect()
+        lidar_sensor.disconnect()
+        
+    except Exception:
+        pass
+    finally:
+        lidar_program_running = False
 
     return
+
+def start_sensor():
+    global lidar_program_running
+
+    try:
+        #Add code to resume sensor scan
+        pass
+    except Exception:
+        pass
+    finally:
+        lidar_program_running = True
 
 
 def collect_scan_rotation(input_scan_generator):
@@ -92,18 +110,28 @@ def increase_motor_speed():
     # INSERT Increment the motor speed of the LIDAR (Potential button handler)
     global lidar_motor_speed
 
-    lidar_sensor.stop()
+    try:
+        lidar_sensor.stop()
 
-    # rpm by which the motor speed is increasing
-    increment = 10
+        # rpm by which the motor speed is increasing
+        increment = 10
 
-    if (lidar_motor_speed + increment) <= 500:
-        lidar_motor_speed += increment
+        if (lidar_motor_speed + increment) <= 500:
+            lidar_motor_speed += increment
 
-    lidar_sensor.set_motor_pwm(lidar_motor_speed)
+        lidar_sensor.set_motor_pwm(lidar_motor_speed)
+        lidar_sensor.start_scan()
+    except Exception:
+        lidar_sensor.stop()
 
-    lidar_sensor.start_scan()
+        # rpm by which the motor speed is increasing
+        increment = 10
 
+        if (lidar_motor_speed + increment) <= 500:
+            lidar_motor_speed += increment
+
+        lidar_sensor.set_motor_pwm(lidar_motor_speed)
+        lidar_sensor.start_scan()
     return
 
 """
@@ -118,9 +146,10 @@ def decrease_motor_speed():
 
     if (lidar_motor_speed - decrement) >= 0:
         lidar_motor_speed -= decrement
-
-    lidar_sensor.set_motor_pwm(lidar_motor_speed)
-
+    try:
+        lidar_sensor.set_motor_pwm(lidar_motor_speed)
+    except Exception:
+        pass
     return
 
 
@@ -132,25 +161,35 @@ def draw_points():
     """
         TO-DO => Insert code that reads from the sensor
     """
-
-    for i in range(0, len(data)):
-        data[i]["distance"] = data[i]["distance"] + 100
-        plot_points[i].remove()
-        plot_points[i], = ax.plot(data[i]["angle"], data[i]["distance"], "ro")
+    try:
+        # code to draw points 
+        # loop through the lidar values 360 at a time, set the value with a floored value of the angle as the index 
+        for i in range(0, len(data)):
+            data[i]["distance"] = data[i]["distance"] + 100 
+            plot_points[i].remove()
+            if data[i]["quality"] > 0:
+                plot_points[i], = ax.plot(data[i]["angle"], data[i]["distance"], "ro")
    
-    ax.figure.canvas.draw()
-    ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
-    ax.grid(True)
-
-    window.after(10, draw_points) # updates the plot every 10 milliseconds
+        ax.figure.canvas.draw()
+        ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+        ax.grid(True)
+    except Exception:
+        pass
+    finally:
+        if lidar_program_running:
+            window.after(100, draw_points) # updates the plot every 10 milliseconds
 
 """
     This function exits the application
 """
 def exit():
-    stop_sensor()
-    time.sleep(1)
-    window.quit()
+    try:
+        stop_sensor()
+    except Exception:
+        pass
+    finally:
+        time.sleep(1)
+        window.quit()
 
 """
     This function is used to setup the GUI
@@ -158,7 +197,8 @@ def exit():
 def setup_gui():
     # INSERT Setup elements of GUI
     window.title("Lidar Applicataion")
-    window.attributes("-fullscreen", True) # sets the application to full screen
+    # window.attributes("-fullscreen", True) # sets the application to full screen
+    window.geometry(f'{window.winfo_screenwidth()}x{window.winfo_screenheight()}')
     helv36 = tkFont.Font(family='Helvetica', size=40, weight=tkFont.BOLD) # configures the font for the widgets
     window.rowconfigure(0, minsize=100, weight=1)
 
@@ -167,7 +207,7 @@ def setup_gui():
     buttons.grid(row=0, column=0)
     start = Button(buttons, width=20, height=3, text="Start", bg="green", fg="white", font=helv36) # start scan button (TO-DO)
     start.pack()
-    stop = Button(buttons, width=20, height=3, text="Stop", fg="white", bg="black", font=helv36) # stop scan button (TO-DO)
+    stop = Button(buttons, width=20, height=3, command=stop_sensor, text="Stop", fg="white", bg="black", font=helv36) # stop scan button (TO-DO)
     stop.pack()
     save = Button(buttons, width=20, height=3, text="Save", bg="blue", fg="white", font=helv36) # save button (TO-DO)
     save.pack()
