@@ -167,13 +167,19 @@ def draw_points():
         for i in range(0, len(data)):
             data[i]["distance"] = data[i]["distance"] + 100 
             plot_points[i].remove()
+            
             if data[i]["quality"] > 0:
+                print(data[i]["quality"])
                 plot_points[i], = ax.plot(data[i]["angle"], data[i]["distance"], "ro")
+            else:
+                print(data[i]["quality"])
+                plot_points[i], = ax.plot(data[i]["angle"], data[i]["distance"], "bo", alpha=0)
    
         ax.figure.canvas.draw()
         ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
         ax.grid(True)
     except Exception:
+        print("Exception")
         pass
     finally:
         if lidar_program_running:
