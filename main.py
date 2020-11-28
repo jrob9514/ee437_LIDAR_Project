@@ -44,11 +44,14 @@ ax = figure.add_subplot(111, projection='polar')
 def scan(in_q):
     global scan_data
 
-    for scan in lidar.iter_scans():
-        for (_, angle, distance) in scan:
-            scan_data[min([359, floor(angle)])] = distance
+    try:
+        for scan in lidar.iter_scans():
+            for (_, angle, distance) in scan:
+                scan_data[min([359, floor(angle)])] = distance
 
-        in_q.put(scan_data)
+            in_q.put(scan_data)
+    except Exception as e:
+        print("scan error: ", e)
 
 
 """
