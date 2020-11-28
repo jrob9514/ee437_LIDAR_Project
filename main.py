@@ -19,39 +19,43 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 """Global Variables"""
+
+# Default port for USB devices
 PORT_NAME = '/dev/ttyUSB0'
+# Global variable for LIDAR sensor
 lidar = RPLidar(None, PORT_NAME)
+# Data queue used for passing data from the scan thread to the GUI thread
+data_queue = Queue(maxsize=10)
 
-scan_data = [0] * 360
-
-data_queue = Queue()
-
+# GUI Global variables
 lidar_program_running = True
-
 window = Tk()
-
-data = []
-plot_points = []
-
 figure = plt.Figure(figsize=(30, 30), dpi=100)
 ax = figure.add_subplot(111, projection='polar')
 
-"""
-    Sets up the lidar sensor
-"""
 
+def scan():
+    # Function for generating lidar scan data
 
-def scan(in_q):
-    global scan_data
+    global lidar_program_running
+
+    # Create array of scan data
+    scan_data = [0]*360
 
     try:
-        for scan in lidar.iter_scans():
-            for (_, angle, distance) in scan:
+        # Iterate through the scans produced by the LIDAR
+        for single_scan in lidar.iter_scans():
+            for (_, angle, distance) in single_scan:
                 scan_data[min([359, floor(angle)])] = distance
 
-            in_q.put(scan_data)
+            if not data_queue.full():
+                data_queue.put(scan_data)
+
     except Exception as e:
         print("scan error: ", e)
+
+    finally:
+        lidar_program_running = False
 
 
 """
@@ -60,17 +64,18 @@ def scan(in_q):
 
 
 def stop_sensor():
-    global lidar_program_running
+    # Function for stopping the LIDAR scanner gracefully
     try:
         print("Stopping LIDAR")
         lidar.stop()
+
+        time.sleep(2)
+
         print("Disconnecting LIDAR")
         lidar.disconnect()
 
     except Exception as e:
         print("stop_sensor error: ", e)
-    finally:
-        lidar_program_running = False
 
     return
 
@@ -79,31 +84,30 @@ def draw_points():
     # Function for updating the GUI canvas
 
     try:
+        # Grab the first data point in the queue
         scan_points = data_queue.get()
 
         if scan_points:
+            # Clear the polar plot
             ax.clear()
 
+            # Loop through the list of data points
             for angle in range(360):
-                distance = scan_data[angle]
+                # Assign a distance for each angle
+                distance = scan_points[angle]
+                # Convert angle from degrees to radians
                 radians = angle * pi / 180.0
-
+                # Plot the data points on the polar graph
                 ax.plot(radians, distance, "ro", alpha=1)
 
+        # Draw the figure
         ax.figure.canvas.draw()
-        ax.grid(True)
 
     except Exception as e:
         print("draw_points error: ", e)
-
     finally:
         if lidar_program_running:
             window.after(100, draw_points)
-
-
-"""
-    This function exits the application
-"""
 
 
 def exit():
@@ -116,15 +120,12 @@ def exit():
         window.quit()
 
 
-"""
-    This function is used to setup the GUI
-"""
-
-
 def setup_gui():
-    # INSERT Setup elements of GUI
+    # This function setps up the GUI
+
+    # Set window title
     window.title("Lidar Applicataion")
-    # window.attributes("-fullscreen", True) # sets the application to full screen
+    # Set window to fill entire screen
     window.geometry(f'{window.winfo_screenwidth()}x{window.winfo_screenheight()}')
     helv36 = tkFont.Font(family='Helvetica', size=40, weight=tkFont.BOLD)  # configures the font for the widgets
     window.rowconfigure(0, minsize=100, weight=1)
@@ -132,14 +133,18 @@ def setup_gui():
     window.columnconfigure(1, minsize=100, weight=1)  # The main window for the application
     buttons = Frame(window)
     buttons.grid(row=0, column=0)
+
     start = Button(buttons, width=20, height=3, text="Start", command=draw_points, bg="green", fg="white",
                    font=helv36)  # start scan button (TO-DO)
     start.pack()
-    stop = Button(buttons, width=20, height=3, command=stop_sensor, text="Stop", fg="white", bg="black",
-                  font=helv36)  # stop scan button (TO-DO)
-    stop.pack()
-    save = Button(buttons, width=20, height=3, text="Save", bg="blue", fg="white", font=helv36)  # save button (TO-DO)
-    save.pack()
+
+    # stop = Button(buttons, width=20, height=3, command=stop_sensor, text="Stop", fg="white", bg="black",
+                  # font=helv36)  # stop scan button (TO-DO)
+    #stop.pack()
+
+    #save = Button(buttons, width=20, height=3, text="Save", bg="blue", fg="white", font=helv36)  # save button (TO-DO)
+    #save.pack()
+
     close = Button(buttons, width=20, height=3, text="Exit", command=exit, bg="red", fg="white",
                    font=helv36)  # close button
     close.pack()
@@ -148,11 +153,7 @@ def setup_gui():
     plot = Frame(master=window)
     plot.grid(row=0, column=1)
 
-    # loops through the data object, plots the points, and stroes them in an array of points to streamline removal of each point
-    # for elem in data:
-    #   plot_points.extend(ax.plot(elem["angle"], elem["distance"], "ro"))
-
-    # ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+    ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
     ax.grid(True)
 
     canvas = FigureCanvasTkAgg(figure, plot)  # adds the plot to the GUI
@@ -161,13 +162,16 @@ def setup_gui():
 
 
 if __name__ == "__main__":
+    # Program entry point
+
     # Print Lidar Information
     print(lidar.info)
 
     # Call setup code for GUI
     setup_gui()
 
-    scan_thread = threading.Thread(target=scan, args=(data_queue,))
+    # Create thread for running scanner
+    scan_thread = threading.Thread(target=scan)
 
     # Set scan thread to terminate itself after program is complete
     scan_thread.setDaemon(True)
