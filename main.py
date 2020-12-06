@@ -2,9 +2,9 @@
 
 from adafruit_rplidar import RPLidar
 from math import pi, floor
-
+import datetime
 from queue import Queue
-
+from tkinter import messagebox
 import time
 from tkinter import *
 from tkinter import font as tkFont
@@ -32,6 +32,7 @@ lidar_program_running = True
 window = Tk()
 figure = plt.Figure(figsize=(30, 30), dpi=100)
 ax = figure.add_subplot(111, projection='polar')
+export = False
 
 
 def scan():
@@ -90,16 +91,22 @@ def draw_points():
         if scan_points:
             # Clear the polar plot
             ax.clear()
-
+            if export:
+                filename = "export" + datetime.datetime.now() + ".csv"
+                export_file = open(filename, "w")
             # Loop through the list of data points
             for angle in range(360):
                 # Assign a distance for each angle
                 distance = scan_points[angle]
                 # Convert angle from degrees to radians
                 radians = angle * pi / 180.0
+                if export:
+                    export_file.writeline(f'{distance}, {angle}')
                 # Plot the data points on the polar graph
                 ax.plot(radians, distance, "ro", alpha=1)
-
+            if export:
+                messagebox.showinfo("Success","Data exported to " + filename)
+                export = False
         # Draw the figure
         ax.figure.canvas.draw()
 
@@ -118,6 +125,13 @@ def exit():
     finally:
         time.sleep(1)
         window.quit()
+
+def save_data():
+    global export
+    export = not export
+    return
+
+
 
 
 def setup_gui():
@@ -138,12 +152,12 @@ def setup_gui():
                    font=helv36)  # start scan button (TO-DO)
     start.pack()
 
-    # stop = Button(buttons, width=20, height=3, command=stop_sensor, text="Stop", fg="white", bg="black",
-                  # font=helv36)  # stop scan button (TO-DO)
-    #stop.pack()
+    stop = Button(buttons, width=20, height=3, command=stop_sensor, text="Stop", fg="white", bg="black",
+                  font=helv36)  # stop scan button (TO-DO)
+    stop.pack()
 
-    #save = Button(buttons, width=20, height=3, text="Save", bg="blue", fg="white", font=helv36)  # save button (TO-DO)
-    #save.pack()
+    save = Button(buttons, width=20, height=3, command=save_data, text="Save", bg="blue", fg="white", font=helv36)  # save button (TO-DO)
+    save.pack()
 
     close = Button(buttons, width=20, height=3, text="Exit", command=exit, bg="red", fg="white",
                    font=helv36)  # close button
@@ -179,6 +193,6 @@ if __name__ == "__main__":
     # Start the scanning thread
     scan_thread.start()
 
-    # Call the GUI loop
+    Call the GUI loop
     window.mainloop()
 
