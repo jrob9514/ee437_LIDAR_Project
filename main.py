@@ -18,6 +18,8 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
+import os
+
 """Global Variables"""
 
 # Default port for USB devices
@@ -83,6 +85,7 @@ def stop_sensor():
 
 def draw_points():
     # Function for updating the GUI canvas
+    global export
 
     try:
         # Grab the first data point in the queue
@@ -92,8 +95,9 @@ def draw_points():
             # Clear the polar plot
             ax.clear()
             if export:
-                filename = "export" + datetime.datetime.now() + ".csv"
+                filename = "export_" + datetime.datetime.now().strftime("%d-%m-%Y_%I:%M_%s") + ".csv"
                 export_file = open(filename, "w")
+                export_file.write(f'Angle,Distance \n')
             # Loop through the list of data points
             for angle in range(360):
                 # Assign a distance for each angle
@@ -101,7 +105,7 @@ def draw_points():
                 # Convert angle from degrees to radians
                 radians = angle * pi / 180.0
                 if export:
-                    export_file.writeline(f'{distance}, {angle}')
+                    export_file.write(f'{angle}, {distance} \n')
                 # Plot the data points on the polar graph
                 ax.plot(radians, distance, "ro", alpha=1)
             if export:
@@ -193,6 +197,6 @@ if __name__ == "__main__":
     # Start the scanning thread
     scan_thread.start()
 
-    Call the GUI loop
+    # Call the GUI loop
     window.mainloop()
 
